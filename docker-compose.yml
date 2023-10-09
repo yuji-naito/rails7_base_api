@@ -1,0 +1,38 @@
+version: "3.8"
+
+x-rails: &rails
+  build:
+    context: .
+    args:
+      RAILS_ENV: development
+  volumes:
+    - ./:/app
+  env_file:
+    - .env.local
+  environment:
+    - EDITOR=vim
+
+services:
+  db:
+    image: postgres:15.4-alpine
+    ports:
+      - '5432:5432'
+    volumes:
+      - psql-data:/var/lib/postgresql/data:delegated
+    env_file:
+      - .env.local
+  app:
+    <<: *rails
+    command: >
+      ash -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0'"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    tty: true
+    stdin_open: true
+
+volumes:
+  psql-data:
+    driver: local
+  bundler_volume:
